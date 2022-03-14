@@ -94,6 +94,7 @@ def _impl(ctx):
                         flags = [
                             "-U_FORTIFY_SOURCE",
                             "-D_FORTIFY_SOURCE=1",
+                            "-DFREESTANDING",
                             "-fstack-protector",
                             "-Wall",
                             "-fno-omit-frame-pointer",
@@ -214,6 +215,7 @@ def _impl(ctx):
     cxx_builtin_include_directories = [
         ctx.attr.path + "/arm-none-eabi/include",
         ctx.attr.path + "/lib/gcc/arm-none-eabi/10.2.1/include",
+        ctx.attr.path + "/lib/gcc/arm-none-eabi/10.2.1/include-fixed",
     ]
 
     return cc_common.create_cc_toolchain_config_info(

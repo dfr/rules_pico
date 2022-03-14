@@ -1,7 +1,6 @@
 workspace(name = "rules_pico")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("//pico:repositories.bzl", "rules_pico_dependencies", "rules_pico_toolchains")
 
 http_archive(
     name = "rules_foreign_cc",
@@ -13,10 +12,18 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.7.0.tar.gz",
 )
 
-local_repository(
-    name = "rules_foreign_cc_",
-    path = "/home/dfr/src/rules_foreign_cc",
+http_archive(
+    name = "bazel_skylib",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.2.0/bazel-skylib-1.2.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.2.0/bazel-skylib-1.2.0.tar.gz",
+    ],
+    sha256 = "af87959afe497dc8dfd4c6cb66e1279cb98ccc84284619ebfec27d9c09a903de",
 )
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
 
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 
@@ -25,21 +32,7 @@ rules_foreign_cc_dependencies(
     register_built_tools = False,
 )
 
+load("//pico:repositories.bzl", "rules_pico_dependencies", "rules_pico_toolchains")
+
 rules_pico_dependencies()
 rules_pico_toolchains();
-
-#new_local_repository(
-#    name = "pico-sdk",
-#    path = "/projects/rpi/pico/pico-sdk",
-#    build_file = "pico-sdk.BUILD",
-#)
-
-#new_local_repository(
-#    name = "pico-examples",
-#    path = "/projects/rpi/pico/pico-examples",
-#    build_file = "pico-examples.BUILD",
-#)
-
-#register_toolchains(
-#    "//toolchain:gcc-arm-embedded",
-#)
