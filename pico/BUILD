@@ -1,40 +1,37 @@
-load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
-
-cc_library(
-    name = "pico",
+[alias(
+    name = n,
+    actual = "@pico-sdk//:" + n,
     visibility = ["//visibility:public"],
-    deps = ["pico_bazel"],
-)
+) for n in [
+    "hardware_adc",
+    "hardware_base",
+    "hardware_claim",
+    "hardware_clocks",
+    "hardware_divider",
+    "hardware_dma",
+    "hardware_exception",
+    "hardware_flash",
+    "hardware_gpio",
+    "hardware_i2c",
+    "hardware_interp",
+    "hardware_irq",
+    "hardware_pio",
+    "hardware_pll",
+    "hardware_pwm",
+    "hardware_resets",
+    "hardware_rtc",
+    "hardware_spi",
+    "hardware_sync",
+    "hardware_timer",
+    "hardware_uart",
+    "hardware_vreg",
+    "hardware_watchdog",
+    "hardware_xosc",
 
-cmake(
-    name = "pico_cmake",
-    build_args = [
-        #"-v",
-        "-j 8",
-    ],
-    build_data = [
-        "@pico-sdk//:top",
-    ],
-    cache_entries = {
-        "CMAKE_SYSTEM_NAME": "PICO",
-    },
-    env = {
-        "PICO_SDK_PATH": "$(execpath @pico-sdk//:top)",
-        "PICO_TOOLCHAIN_PATH": "/usr/local/gcc-arm-embedded",
-    },
-    generate_crosstool_file = False,
-    lib_source = "//pico/cmake:all_srcs",
-    out_data_dirs = ["data"],
-    out_static_libs = [
-        "libpico_stdlib.a",
-        "libhardware_spi.a",
-    ],
-)
-
-cc_library(
-    name = "pico_bazel",
-    deps = [
-        "@pico-sdk//:hardware_spi",
-        "@pico-sdk//:pico_stdlib",
-    ],
-)
+    "pico_multicore",
+    "pico_stdlib",
+    "pico_sync",
+    "pico_time",
+    "pico_unique_id",
+    "pico_util",
+]]

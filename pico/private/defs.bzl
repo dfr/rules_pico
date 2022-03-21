@@ -6,6 +6,7 @@ def pico_sdk_library(
         hdrs = [],
         defines = [],
         deps = [],
+        target_compatible_with = None,
         visibility = ["//visibility:public"],
         alwayslink = None):
     native.cc_library(
@@ -23,9 +24,11 @@ def pico_sdk_library(
         defines = defines + ["LIB_" + name.upper()],
         deps = deps,
         strip_include_prefix = incdir,
+        target_compatible_with = target_compatible_with,
         visibility = visibility,
         alwayslink = alwayslink,
     )
+
 
 def pico_simple_hardware_target(*, name, deps = [], visibility = ["//visibility:public"]):
     pico_sdk_library(

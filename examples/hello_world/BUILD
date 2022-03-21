@@ -6,7 +6,7 @@ pico_elf_binary(
         "@pico-examples//:hello_world/serial/hello_serial.c",
     ],
     deps = [
-        "//pico:pico",
+        "//pico:pico_stdlib",
     ],
 )
 

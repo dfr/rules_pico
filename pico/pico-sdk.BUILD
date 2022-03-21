@@ -2,20 +2,30 @@
 
 load("@rules_pico//pico/private:defs.bzl", "pico_sdk_library", "pico_simple_hardware_target")
 
+package(default_visibility = ["@rules_pico//pico:__pkg__"])
+
 filegroup(
     name = "all_srcs",
     srcs = glob(["**"]),
-    visibility = ["//visibility:public"],
 )
 
 filegroup(
     name = "top",
     srcs = ["."],
-    visibility = ["//visibility:public"],
 )
 
 exports_files(
     glob(["src/**"]),
+)
+
+# support for host builds
+
+config_setting(
+    name = "pico_build",
+    constraint_values = [
+        "@platforms//os:none",
+        "@platforms//cpu:armv6-m",
+    ],
 )
 
 # boot_stage2
@@ -93,10 +103,8 @@ cc_binary(
         "tools/elf2uf2/main.cpp",
     ],
     target_compatible_with = select({
-        "@platforms//os:freebsd": [],
-        "@platforms//os:osx": [],
-        "@platforms//os:linux": [],
-        "//conditions:default": ["@platforms//:incompatible"],
+        "@platforms//os:none": ["@platforms//:incompatible"],
+        "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
     deps = [
@@ -143,7 +151,30 @@ cc_library(
     defines = select({
         ":board_pico": ["PICO_BOARD=\\\"pico\\\""],
         ":board_vgaboard": ["PICO_BOARD=\\\"vgaboard\\\""],
-    }) + ["LIB_PICO_BASE"],
+    }) + [
+        "LIB_PICO_BASE",
+        "PICO_NO_BINARY_INFO=0",
+        "PICO_ON_DEVICE=1",
+        "PICO_NO_BINARY_INFO=0",
+        "PICO_TIME_DEFAULT_ALARM_POOL_DISABLED=0",
+        "PICO_DIVIDER_CALL_IDIV0=0",
+        "PICO_DIVIDER_CALL_LDIV0=0",
+        "PICO_DIVIDER_HARDWARE=1",
+        "PICO_DOUBLE_ROM=1",
+        "PICO_FLOAT_ROM=1",
+        "PICO_MULTICORE=1",
+        "PICO_BITS_IN_RAM=0",
+        "PICO_DIVIDER_IN_RAM=0",
+        "PICO_DOUBLE_PROPAGATE_NANS=0",
+        "PICO_DOUBLE_IN_RAM=0",
+        "PICO_MEM_IN_RAM=0",
+        "PICO_FLOAT_IN_RAM=0",
+        "PICO_FLOAT_PROPAGATE_NANS=1",
+        "PICO_NO_FLASH=0",
+        "PICO_COPY_TO_RAM=0",
+        "PICO_DISABLE_SHARED_IRQ_HANDLERS=0",
+        "PICO_NO_BI_BOOTSEL_VIA_DOUBLE_RESET=0",
+    ],
     strip_include_prefix = "src/common/pico_base/include",
     deps = [
         ":boards",
@@ -183,8 +214,28 @@ genrule(
 pico_sdk_library(
     name = "pico_binary_info",
     srcdir = "src/common/pico_binary_info",
-    defines = ["PICO_NO_BINARY_INFO=0"],
     incdir = "src/common/pico_binary_info/include",
+)
+
+cc_library(
+    name = "pico_bit_ops",
+    srcs = select({
+        ":pico_build": ["src/rp2_common/pico_bit_ops/bit_ops_aeabi.S"],
+        "//conditions:default": ["src/host/pico_bit_ops/bit_ops.c"],
+    }),
+    hdrs = glob(["src/common/pico_bit_ops/include/**/*.h"]),
+    defines = ["LIB_BIT_OPS"],
+    strip_include_prefix = "src/common/pico_bit_ops/include",
+    deps = select({
+        ":pico_build": [
+            ":pico_bootrom",
+            ":pico_platform",
+        ],
+        "//conditions:default": [
+            ":pico_platform",
+        ],
+    }),
+    alwayslink = True,
 )
 
 pico_sdk_library(
@@ -341,19 +392,48 @@ pico_sdk_library(
     ],
 )
 
-pico_sdk_library(
+cc_library(
     name = "pico_platform",
-    srcdir = "src/rp2_common/pico_platform",
-    deps = [
-        ":hardware_base",
-        ":hardware_regs",
-        ":pico_platform_headers",
-    ],
+    srcs = select({
+        ":pico_build": ["src/rp2_common/pico_platform/platform.c"],
+        "//conditions:default": ["src/host/pico_platform/platform_base.c"],
+    }),
+    defines = ["LIB_PICO_PLATFORM"],
+    target_compatible_with = select({
+        ":pico_build": [
+            "@platforms//os:none",
+            "@platforms//cpu:armv6-m",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = select({
+        ":pico_build": [
+            ":hardware_base",
+            ":hardware_regs",
+            ":pico_platform_headers",
+        ],
+        "//conditions:default": [
+            ":pico_platform_headers",
+        ],
+    }),
 )
 
-pico_sdk_library(
+cc_library(
     name = "pico_platform_headers",
-    incdir = "src/rp2_common/pico_platform/include",
+    hdrs = select({
+        ":pico_build": [
+            "src/rp2_common/pico_platform/include/pico/asm_helper.S",
+            "src/rp2_common/pico_platform/include/pico/platform.h",
+        ],
+        "//conditions:default": [
+            "src/host/pico_platform/include/hardware/platform_defs.h",
+            "src/host/pico_platform/include/pico/platform.h",
+        ],
+    }),
+    strip_include_prefix = select({
+        ":pico_build": "src/rp2_common/pico_platform/include",
+        "//conditions:default": "src/host/pico_platform/include",
+    }),
     deps = [
         ":pico_base",
     ],
@@ -380,9 +460,17 @@ cc_library(
     alwayslink = True,
 )
 
+cc_library(
+    name = "pico_printf_none",
+    defines = ["LIB_PICO_PRINTF_NONE"],
+)
+
 alias(
     name = "pico_printf",
-    actual = ":pico_printf_pico",
+    actual = select({
+        ":pico_build": ":pico_printf_pico",
+        "//conditions:default": ":pico_printf_none",
+    }),
 )
 
 pico_sdk_library(
@@ -394,6 +482,7 @@ pico_sdk_library(
         ":hardware_irq",
         ":hardware_uart",
         ":pico_binary_info",
+        ":pico_bit_ops",
         ":pico_bootrom",
         ":pico_divider",
         ":pico_double",
@@ -417,30 +506,45 @@ pico_sdk_library(
     ],
 )
 
-pico_sdk_library(
+cc_library(
     name = "pico_stdlib",
-    srcdir = "src/rp2_common/pico_stdlib",
-    deps = [
-        ":pico_binary_info",
-        ":pico_platform",
-        ":pico_runtime",
-        ":pico_standard_link",
-        ":pico_stdio",
-        ":pico_stdlib_headers",
-        ":pico_time",
-    ],
+    srcs = select({
+        ":pico_build": ["src/rp2_common/pico_stdlib/stdlib.c"],
+        "//conditions:default": [],
+    }),
+    defines = ["LIB_PICO_STDLIB"],
+    deps = select({
+        ":pico_build": [
+            ":pico_binary_info",
+            ":pico_platform",
+            ":pico_runtime",
+            ":pico_standard_link",
+            ":pico_stdio",
+            ":pico_stdlib_headers",
+            ":pico_time",
+        ],
+        "//conditions:default": [
+            ":pico_stdlib_headers",
+        ],
+    }),
+    visibility = ["//visibility:public"],
 )
 
 pico_sdk_library(
     name = "pico_stdlib_headers",
     incdir = "src/common/pico_stdlib/include",
-    deps = [
-        ":hardware_divider",
-        ":hardware_gpio",
-        ":hardware_uart",
-        ":pico_time",
-        ":pico_util",
-    ],
+    deps = select({
+        ":pico_build": [
+            ":hardware_divider",
+            ":hardware_gpio",
+            ":hardware_uart",
+            ":pico_time",
+            ":pico_util",
+        ],
+        "//conditions:default": [
+            ":pico_time",
+        ],
+    }),
 )
 
 [config_setting(
@@ -452,10 +556,20 @@ pico_sdk_library(
     "stdio_semihosting",
 ]]
 
-pico_sdk_library(
+alias(
     name = "pico_stdio",
-    srcdir = "src/rp2_common/pico_stdio",
-    incdir = "src/rp2_common/pico_stdio/include",
+    actual = select({
+        ":pico_build": ":pico_stdio_pico",
+        "//conditions:default": ":pico_stdio_host",
+    }),
+)
+
+cc_library(
+    name = "pico_stdio_pico",
+    srcs = [
+        "src/rp2_common/pico_stdio/stdio.c",
+    ],
+    defines = ["LIB_PICO_STDIO"],
     deps = [
         ":hardware_irq",
         ":hardware_pll",
@@ -475,9 +589,33 @@ pico_sdk_library(
     }),
 )
 
-pico_sdk_library(
+cc_library(
+    name = "pico_stdio_host",
+    srcs = [
+        "src/host/pico_stdio/stdio.c",
+    ],
+    defines = ["LIB_PICO_STDIO"],
+    deps = [
+        ":pico_stdio_headers",
+        ":pico_stdlib",
+    ],
+)
+
+cc_library(
     name = "pico_stdio_headers",
-    incdir = "src/rp2_common/pico_stdio/include",
+    hdrs = select({
+        ":pico_build": [
+            "src/rp2_common/pico_stdio/include/pico/stdio.h",
+            "src/rp2_common/pico_stdio/include/pico/stdio/driver.h",
+        ],
+        "//conditions:default": [
+            "src/host/pico_stdio/include/pico/stdio.h",
+        ],
+    }),
+    strip_include_prefix = select({
+        ":pico_build": "src/rp2_common/pico_stdio/include",
+        "//conditions:default": "src/host/pico_stdio/include",
+    }),
     deps = [
         ":pico_platform",
     ],
@@ -546,7 +684,7 @@ pico_sdk_library(
     name = "pico_sync_headers",
     incdir = "src/common/pico_sync/include",
     deps = [
-        ":hardware_sync_headers",
+        ":hardware_sync",
     ],
 )
 
@@ -565,7 +703,7 @@ pico_sdk_library(
     name = "pico_time_headers",
     incdir = "src/common/pico_time/include",
     deps = [
-        ":hardware_timer_headers",
+        ":hardware_timer",
     ],
 )
 
@@ -792,6 +930,10 @@ pico_simple_hardware_target(
     ],
 )
 
+pico_simple_hardware_target(
+    name = "hardware_pwm",
+)
+
 pico_sdk_library(
     name = "hardware_regs",
     incdir = "src/rp2040/hardware_regs/include",
@@ -824,20 +966,85 @@ pico_sdk_library(
     incdir = "src/rp2040/hardware_structs/include",
 )
 
-pico_simple_hardware_target(
+cc_library(
     name = "hardware_sync",
-    deps = [
-        ":hardware_claim",
-    ],
+    srcs = select({
+        ":pico_build": [
+            "src/rp2_common/hardware_sync/sync.c",
+        ],
+        "//conditions:default": [
+            "src/host/hardware_sync/sync_core0_only.c",
+        ],
+    }),
+    deps = select({
+        ":pico_build": [
+            ":hardware_claim",
+            ":hardware_sync_headers",
+        ],
+        "//conditions:default": [
+            ":pico_base",
+            ":pico_platform",
+            ":hardware_sync_headers",
+        ],
+    }),
+    visibility = ["//visibility:public"],
 )
 
-pico_simple_hardware_target(
+cc_library(
+    name = "hardware_sync_headers",
+    hdrs = select({
+        ":pico_build": [
+            "src/rp2_common/hardware_sync/include/hardware/sync.h",
+        ],
+        "//conditions:default": [
+            "src/host/hardware_sync/include/hardware/sync.h",
+        ],
+    }),
+    strip_include_prefix = select({
+        ":pico_build": "src/rp2_common/hardware_sync/include",
+        "//conditions:default": "src/host/hardware_sync/include",
+    }),
+    deps = select({
+        ":pico_build": [
+        ],
+        "//conditions:default": [
+        ],
+    }),
+)
+
+cc_library(
     name = "hardware_timer",
-    deps = [
-        ":hardware_claim",
-        ":hardware_irq",
-        ":hardware_sync",
-    ],
+    srcs = select({
+        ":pico_build": [
+            "src/rp2_common/hardware_timer/timer.c",
+        ],
+        "//conditions:default": [
+            "src/host/hardware_timer/timer.c",
+        ],
+    }),
+    hdrs = select({
+        ":pico_build": [
+            "src/rp2_common/hardware_timer/include/hardware/timer.h",
+        ],
+        "//conditions:default": [
+            "src/host/hardware_timer/include/hardware/timer.h",
+        ],
+    }),
+    strip_include_prefix = select({
+        ":pico_build": "src/rp2_common/hardware_timer/include",
+        "//conditions:default": "src/host/hardware_timer/include",
+    }),
+    deps = select({
+        ":pico_build": [
+            ":hardware_claim_headers",
+            ":hardware_irq_headers",
+            ":hardware_sync",
+        ],
+        "//conditions:default": [
+            ":pico_base",
+        ],
+    }),
+    visibility = ["//visibility:public"],
 )
 
 pico_simple_hardware_target(
