@@ -63,6 +63,10 @@ cc_binary(
         "-nostartfiles",
         "-Wl,--script=$(rootpath src/rp2_common/boot_stage2/boot_stage2.ld)",
     ],
+    target_compatible_with = [
+        "@platforms//os:none",
+        "@platforms//cpu:armv6-m",
+    ],
     deps = [
         "src/rp2_common/boot_stage2/boot_stage2.ld",
         ":boot_stage2_asm",
@@ -513,6 +517,7 @@ cc_library(
         "//conditions:default": [],
     }),
     defines = ["LIB_PICO_STDLIB"],
+    visibility = ["//visibility:public"],
     deps = select({
         ":pico_build": [
             ":pico_binary_info",
@@ -527,7 +532,6 @@ cc_library(
             ":pico_stdlib_headers",
         ],
     }),
-    visibility = ["//visibility:public"],
 )
 
 pico_sdk_library(
@@ -976,6 +980,7 @@ cc_library(
             "src/host/hardware_sync/sync_core0_only.c",
         ],
     }),
+    visibility = ["//visibility:public"],
     deps = select({
         ":pico_build": [
             ":hardware_claim",
@@ -987,7 +992,6 @@ cc_library(
             ":hardware_sync_headers",
         ],
     }),
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -1034,6 +1038,7 @@ cc_library(
         ":pico_build": "src/rp2_common/hardware_timer/include",
         "//conditions:default": "src/host/hardware_timer/include",
     }),
+    visibility = ["//visibility:public"],
     deps = select({
         ":pico_build": [
             ":hardware_claim_headers",
@@ -1044,7 +1049,6 @@ cc_library(
             ":pico_base",
         ],
     }),
-    visibility = ["//visibility:public"],
 )
 
 pico_simple_hardware_target(
