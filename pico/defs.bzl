@@ -157,7 +157,7 @@ WRAP_FUNCTIONS = [
     "vsnprintf",
 ]
 
-def pico_elf_binary(*, name, srcs, deps):
+def pico_elf_binary(*, name, srcs, deps, copts = None):
     native.cc_binary(
         name = name,
         srcs = srcs + [
@@ -177,6 +177,7 @@ def pico_elf_binary(*, name, srcs, deps):
         deps = deps + [
             "@pico-sdk//:src/rp2_common/pico_standard_link/memmap_default.ld",
         ],
+        copts = copts,
     )
 
 # creates a symlink to the binary build with the selected stdio options
@@ -209,12 +210,13 @@ pico_uf2_binary = rule(
     },
 )
 
-def pico_binary(*, name, srcs, deps):
+def pico_binary(*, name, srcs, deps, copts):
     "A macro which generates an ELF binary and converts it to UF2"
     pico_elf_binary(
         name = name + ".elf",
         srcs = srcs,
         deps = deps,
+        copts = copts,
     )
     pico_uf2_binary(
         name = name + ".uf2",
@@ -227,7 +229,6 @@ def _stdio_transition_impl(settings, attr):
         "@rules_pico//pico/config:stdio_uart": attr.uart,
         "@rules_pico//pico/config:stdio_usb": attr.usb,
     }
-        
 
 stdio_transition = transition(
     implementation = _stdio_transition_impl,
