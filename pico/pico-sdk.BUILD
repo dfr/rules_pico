@@ -116,6 +116,50 @@ cc_binary(
     ],
 )
 
+# pioasm
+
+cc_binary(
+    name = "pioasm",
+    srcs = [
+        "tools/pioasm/main.cpp",
+        "tools/pioasm/pio_assembler.cpp",
+        "tools/pioasm/pio_disassembler.cpp",
+        "tools/pioasm/gen/lexer.cpp",
+        "tools/pioasm/gen/parser.cpp",
+        "tools/pioasm/c_sdk_output.cpp",
+        "tools/pioasm/python_output.cpp",
+        "tools/pioasm/hex_output.cpp",
+        "tools/pioasm/ada_output.cpp",
+    ],
+    deps = [
+        ":pioasm_headers",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "pioasm_headers",
+    hdrs = [
+        "tools/pioasm/output_format.h",
+        "tools/pioasm/pio_assembler.h",
+        "tools/pioasm/pio_disassembler.h",
+        "tools/pioasm/pio_types.h",
+    ],
+    deps = [
+        ":pioasm_gen_headers",
+    ],
+    strip_include_prefix = "tools/pioasm",
+)
+
+cc_library(
+    name = "pioasm_gen_headers",
+    hdrs = [
+        "tools/pioasm/gen/parser.hpp",
+        "tools/pioasm/gen/location.h",
+    ],
+    strip_include_prefix = "tools/pioasm/gen",
+)
+
 # boards, cmsis
 
 pico_sdk_library(
