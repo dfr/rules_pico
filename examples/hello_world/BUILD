@@ -1,6 +1,10 @@
-load("//pico:defs.bzl", "pico_elf_binary", "pico_stdio_elf_binary", "pico_uf2_binary")
+load("//pico:defs.bzl", "pico_binary")
+load("//pico:defs.bzl", "pico_build_with_config")
+load("//pico:defs.bzl", "pico_add_bin_output")
+load("//pico:defs.bzl", "pico_add_map_output")
+load("//pico:defs.bzl", "pico_add_uf2_output")
 
-pico_elf_binary(
+pico_binary(
     name = "hello.elf",
     srcs = [
         "@pico-examples//:hello_world/serial/hello_serial.c",
@@ -10,26 +14,26 @@ pico_elf_binary(
     ],
 )
 
-pico_stdio_elf_binary(
+pico_build_with_config(
     name = "hello_serial.elf",
-    executable = ":hello.elf",
-    uart = True,
-    usb = False,
+    input = "hello.elf",
+    stdio_uart = True,
+    stdio_usb = False,
 )
 
-pico_uf2_binary(
+pico_add_uf2_output(
     name = "hello_serial.uf2",
-    elf = "hello_serial.elf",
+    input = "hello_serial.elf",
 )
 
-pico_stdio_elf_binary(
+pico_build_with_config(
     name = "hello_usb.elf",
-    executable = ":hello.elf",
-    uart = False,
-    usb = True,
+    input = "hello.elf",
+    stdio_uart = False,
+    stdio_usb = True,
 )
 
-pico_uf2_binary(
+pico_add_uf2_output(
     name = "hello_usb.uf2",
-    elf = "hello_usb.elf",
+    input = "hello_usb.elf",
 )

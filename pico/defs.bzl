@@ -1,4 +1,4 @@
-load("@rules_cc//cc:toolchain_utils.bzl", "find_cpp_toolchain")
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 
 WRAP_FUNCTIONS = [
     "__aeabi_cdcmpeq",
@@ -157,7 +157,8 @@ WRAP_FUNCTIONS = [
     "vsnprintf",
 ]
 
-def pico_elf_binary(*, name, srcs, deps, copts = None):
+def pico_binary(*, name, srcs, deps, copts = None):
+    "Build an ELF binary using the pico-sdk bootstrap and memory map"
     native.cc_binary(
         name = name,
         srcs = srcs + [
@@ -167,7 +168,9 @@ def pico_elf_binary(*, name, srcs, deps, copts = None):
             "-mcpu=cortex-m0plus",
             "-mthumb",
             "--specs=nosys.specs",
+            #"-Wl,-Map=foo.map",
             "-Wl,--gc-sections",
+            "-Wl,-z,max-page-size=4096",
             "-Wl,--script=$(rootpath @pico-sdk//:src/rp2_common/pico_standard_link/memmap_default.ld)",
         ],
         target_compatible_with = [
@@ -180,29 +183,31 @@ def pico_elf_binary(*, name, srcs, deps, copts = None):
         copts = copts,
     )
 
-# creates a symlink to the binary build with the selected stdio options
-def _uf2_binary_impl(ctx):
-    elf = ctx.executable.elf
-    uf2 = ctx.actions.declare_file(ctx.label.name)
+def _pico_add_uf2_output_impl(ctx):
+    elf = ctx.executable.input
+    out = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.run(
         inputs = [elf],
-        outputs = [uf2],
+        outputs = [out],
         executable = ctx.executable.elf2uf2,
-        arguments = [elf.path, uf2.path],
+        arguments = [elf.path, out.path],
     )
     return [DefaultInfo(
-        files = depset(direct = [uf2]),
+        files = depset(direct = [out]),
     )]
 
-pico_uf2_binary = rule(
-    implementation = _uf2_binary_impl,
+pico_add_uf2_output = rule(
+    implementation = _pico_add_uf2_output_impl,
+    doc = "Convert an ELF format binary to UF2",
     attrs = {
-        "elf": attr.label(
+        "input": attr.label(
+            doc = "Input ELF file",
             cfg = "target",
             executable = True,
             mandatory = True,
         ),
         "elf2uf2": attr.label(
+            doc = "elf2uf2 conversion tool",
             cfg = "host",
             default = "@pico-sdk//:elf2uf2",
             executable = True,
@@ -210,41 +215,94 @@ pico_uf2_binary = rule(
     },
 )
 
-def pico_binary(*, name, srcs, deps, copts):
-    "A macro which generates an ELF binary and converts it to UF2"
-    pico_elf_binary(
-        name = name + ".elf",
-        srcs = srcs,
-        deps = deps,
-        copts = copts,
+def _pico_add_bin_output_impl(ctx):
+    toolchain = find_cpp_toolchain(ctx)
+    elf = ctx.executable.input
+    out = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.run(
+        inputs = [elf],
+        outputs = [out],
+        executable = toolchain.objcopy_executable,
+        arguments = ["-Obinary", elf.path, out.path],
     )
-    pico_uf2_binary(
-        name = name + ".uf2",
-        elf = name + ".elf",
+    return [DefaultInfo(
+        files = depset(direct = [out]),
+    )]
+
+pico_add_bin_output = rule(
+    implementation = _pico_add_bin_output_impl,
+    doc = "Convert an ELF format binary to BIN",
+    fragments = ["cpp"],
+    attrs = {
+        "input": attr.label(
+            doc = "Input ELF file",
+            cfg = "target",
+            executable = True,
+            mandatory = True,
+        ),
+    },
+    toolchains = [
+        "@bazel_tools//tools/cpp:toolchain_type",
+    ],
+)
+
+def _pico_add_map_output_impl(ctx):
+    toolchain = find_cpp_toolchain(ctx)
+    elf = ctx.executable.input
+    out = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.run_shell(
+        inputs = [elf],
+        outputs = [out],
+        command = "{} -C --all-headers {} > {}".format(
+            toolchain.objdump_executable,
+            elf.path,
+            out.path),
     )
+    return [DefaultInfo(
+        files = depset(direct = [out]),
+    )]
+
+pico_add_map_output = rule(
+    implementation = _pico_add_map_output_impl,
+    doc = "Generate a map file from an an ELF format binary",
+    fragments = ["cpp"],
+    attrs = {
+        "input": attr.label(
+            doc = "Input ELF file",
+            cfg = "target",
+            executable = True,
+            mandatory = True,
+        ),
+    },
+    toolchains = [
+        "@bazel_tools//tools/cpp:toolchain_type",
+    ],
+)
 
 # attr is the attributes from pico_stdio_binary below
-def _stdio_transition_impl(settings, attr):
+def _config_override_impl(settings, attr):
     return {
-        "@rules_pico//pico/config:stdio_uart": attr.uart,
-        "@rules_pico//pico/config:stdio_usb": attr.usb,
+        "@rules_pico//pico/config:stdio_uart": attr.stdio_uart,
+        "@rules_pico//pico/config:stdio_usb": attr.stdio_usb,
+        "@rules_pico//pico/config:stdio_semihosting": attr.stdio_semihosting,
     }
 
-stdio_transition = transition(
-    implementation = _stdio_transition_impl,
+config_override = transition(
+    implementation = _config_override_impl,
     inputs = [],
     outputs = [
         "@rules_pico//pico/config:stdio_uart",
         "@rules_pico//pico/config:stdio_usb",
+        "@rules_pico//pico/config:stdio_semihosting",
     ],
 )
 
 # creates a symlink to the binary build with the selected stdio options
-def _stdio_binary_impl(ctx):
+def _pico_build_with_config_impl(ctx):
     elf = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.symlink(
         output = elf,
-        target_file = ctx.executable.executable,
+        target_file = ctx.executable.input,
         is_executable = True,
     )
     return [DefaultInfo(
@@ -252,20 +310,30 @@ def _stdio_binary_impl(ctx):
         files = depset(direct = [elf]),
     )]
 
-pico_stdio_elf_binary = rule(
-    implementation = _stdio_binary_impl,
+pico_build_with_config = rule(
+    implementation = _pico_build_with_config_impl,
+    doc = "Build an input target with specified config overrides and create a symlink to the result",
     attrs = {
         "_allowlist_function_transition": attr.label(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
-        "uart": attr.bool(),
-        "usb": attr.bool(),
-        "executable": attr.label(
-            cfg = "target",
+        "stdio_uart": attr.bool(
+            doc = "Set to true to enable stdio output over UART",
+            default = True,
+        ),
+        "stdio_usb": attr.bool(
+            doc = "Set to true to enable stdio output over USB",
+            default = False,
+        ),
+        "stdio_semihosting": attr.bool(
+            doc = "Set to true to enable stdio output via debugger",
+            default = False,
+        ),
+        "input": attr.label(
+            cfg = config_override,
             executable = True,
             mandatory = True,
         ),
     },
-    cfg = stdio_transition,
     executable = True,
 )

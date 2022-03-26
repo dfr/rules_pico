@@ -179,15 +179,15 @@ def _impl(ctx):
         ),
         tool_path(
             name = "cpp",
-            path = "/bin/false",
+            path = _tool(ctx, "cpp"),
         ),
         tool_path(
             name = "gcov",
-            path = "/bin/false",
+            path = _tool(ctx, "gcov"),
         ),
         tool_path(
             name = "nm",
-            path = "/bin/false",
+            path = _tool(ctx, "nm"),
         ),
         tool_path(
             name = "objcopy",
@@ -195,11 +195,11 @@ def _impl(ctx):
         ),
         tool_path(
             name = "objdump",
-            path = "/bin/false",
+            path = _tool(ctx, "objdump"),
         ),
         tool_path(
             name = "strip",
-            path = "/bin/false",
+            path = _tool(ctx, "strip"),
         ),
     ]
     features = [

@@ -17,8 +17,10 @@ def rules_pico_dependencies():
         new_git_repository,
         name = "pico-sdk",
         build_file = "@rules_pico//pico:pico-sdk.BUILD",
-        tag = "1.3.0",
-        remote = "https://github.com/raspberrypi/pico-sdk.git",
+        #tag = "1.3.0",
+        #remote = "https://github.com/raspberrypi/pico-sdk.git",
+        tag = "1.3.0-dfr",
+        remote = "https://github.com/dfr/pico-sdk.git",
         init_submodules = True,
     )
 

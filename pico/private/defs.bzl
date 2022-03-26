@@ -3,34 +3,32 @@ def pico_sdk_library(
         name,
         srcdir = None,
         incdir = None,
+        srcs = [],
         hdrs = [],
         defines = [],
-        deps = [],
-        target_compatible_with = None,
-        visibility = ["//visibility:public"],
-        alwayslink = None):
-    native.cc_library(
-        name = name,
+        **kwargs):
+    if srcdir:
         srcs = native.glob([
             srcdir + "/*.c",
             srcdir + "/*.S",
-        ], allow_empty = True) if srcdir else [],
+        ], allow_empty = True) + srcs
+    if incdir:
         hdrs = native.glob([
             incdir + "/*.h",
             incdir + "/*.S",
             incdir + "/**/*.h",
             incdir + "/**/*.S",
-        ]) + hdrs if incdir else hdrs,
+        ]) + hdrs
+        kwargs["strip_include_prefix"] = incdir
+    native.cc_library(
+        name = name,
+        srcs = srcs,
+        hdrs = hdrs,
         defines = defines + ["LIB_" + name.upper()],
-        deps = deps,
-        strip_include_prefix = incdir,
-        target_compatible_with = target_compatible_with,
-        visibility = visibility,
-        alwayslink = alwayslink,
+        **kwargs,
     )
 
-
-def pico_simple_hardware_target(*, name, deps = [], visibility = ["//visibility:public"]):
+def pico_simple_hardware_target(*, name, deps = [], **kwargs):
     pico_sdk_library(
         name = name,
         srcdir = "src/rp2_common/" + name,
@@ -38,7 +36,7 @@ def pico_simple_hardware_target(*, name, deps = [], visibility = ["//visibility:
         deps = [
             ":{}_headers".format(name),
         ] + deps,
-        visibility = visibility,
+        **kwargs,
     )
 
     pico_sdk_library(
