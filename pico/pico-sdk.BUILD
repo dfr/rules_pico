@@ -1,6 +1,9 @@
 # -*- bazel-build -*-
 
-load("@rules_pico//pico/private:defs.bzl", "pico_sdk_library", "pico_simple_hardware_target")
+load("@rules_pico//pico/private:defs.bzl", "pico_sdk_library")
+load("@rules_pico//pico/private:defs.bzl", "pico_simple_hardware_target")
+load("@rules_pico//pico/private:defs.bzl", "format_flag_string_value")
+load("@rules_pico//pico/private:defs.bzl", "config_autogen")
 
 package(default_visibility = ["@rules_pico//pico:__pkg__"])
 
@@ -121,20 +124,20 @@ cc_binary(
 cc_binary(
     name = "pioasm",
     srcs = [
+        "tools/pioasm/ada_output.cpp",
+        "tools/pioasm/c_sdk_output.cpp",
+        "tools/pioasm/gen/lexer.cpp",
+        "tools/pioasm/gen/parser.cpp",
+        "tools/pioasm/hex_output.cpp",
         "tools/pioasm/main.cpp",
         "tools/pioasm/pio_assembler.cpp",
         "tools/pioasm/pio_disassembler.cpp",
-        "tools/pioasm/gen/lexer.cpp",
-        "tools/pioasm/gen/parser.cpp",
-        "tools/pioasm/c_sdk_output.cpp",
         "tools/pioasm/python_output.cpp",
-        "tools/pioasm/hex_output.cpp",
-        "tools/pioasm/ada_output.cpp",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         ":pioasm_headers",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -145,17 +148,17 @@ cc_library(
         "tools/pioasm/pio_disassembler.h",
         "tools/pioasm/pio_types.h",
     ],
+    strip_include_prefix = "tools/pioasm",
     deps = [
         ":pioasm_gen_headers",
     ],
-    strip_include_prefix = "tools/pioasm",
 )
 
 cc_library(
     name = "pioasm_gen_headers",
     hdrs = [
-        "tools/pioasm/gen/parser.hpp",
         "tools/pioasm/gen/location.h",
+        "tools/pioasm/gen/parser.hpp",
     ],
     strip_include_prefix = "tools/pioasm/gen",
 )
@@ -174,17 +177,6 @@ pico_sdk_library(
 
 # pico_base
 
-[
-    config_setting(
-        name = "board_" + n,
-        flag_values = {"@rules_pico//pico/config:board": n},
-    )
-    for n in [
-        "pico",
-        "vgaboard",
-    ]
-]
-
 cc_library(
     name = "pico_base",
     hdrs = [
@@ -196,10 +188,7 @@ cc_library(
         "src/common/pico_base/include/pico/types.h",
         "src/common/pico_base/include/pico/version.h",
     ],
-    defines = select({
-        ":board_pico": ["PICO_BOARD=\\\"pico\\\""],
-        ":board_vgaboard": ["PICO_BOARD=\\\"vgaboard\\\""],
-    }) + [
+    defines = [
         "LIB_PICO_BASE",
         "PICO_NO_BINARY_INFO=0",
         "PICO_ON_DEVICE=1",
@@ -227,18 +216,20 @@ cc_library(
     deps = [
         ":boards",
         ":cmsis",
+        ":pico_board_flag",
     ],
 )
 
-genrule(
+format_flag_string_value(
+    name = "pico_board_flag",
+    flag_name = "PICO_BOARD",
+    flag_value = "@rules_pico//pico/config:board",
+)
+
+config_autogen(
     name = "gen_config_autogen",
-    outs = [
-        "src/common/pico_base/include/pico/config_autogen.h",
-    ],
-    cmd = """
-        (echo '#include \"boards/pico.h\"';
-         echo '#include \"cmsis/rename_exceptions.h\"') > $@
-    """,
+    board = "@rules_pico//pico/config:board",
+    output = "src/common/pico_base/include/pico/config_autogen.h",
 )
 
 genrule(

@@ -1,3 +1,5 @@
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+
 def pico_sdk_library(
         *,
         name,
@@ -48,3 +50,42 @@ def pico_simple_hardware_target(*, name, deps = [], **kwargs):
             ":hardware_structs",
         ],
     )
+
+def _format_flag_string_value_impl(ctx):
+    return CcInfo(
+        compilation_context = cc_common.create_compilation_context(
+            defines = depset([
+                "{}=\"{}\"".format(
+                    ctx.attr.flag_name,
+                    ctx.attr.flag_value[BuildSettingInfo].value,
+                ),
+            ]),
+        ),
+    )
+
+format_flag_string_value = rule(
+    implementation = _format_flag_string_value_impl,
+    attrs = {
+        "flag_name": attr.string(),
+        "flag_value": attr.label(),
+    },
+)
+
+_TEMPLATE = """\
+#include "boards/{}.h"
+#include "cmsis/rename_exceptions.h"
+"""
+
+def _config_autogen_impl(ctx):
+    ctx.actions.write(
+        output = ctx.outputs.output,
+        content = _TEMPLATE.format(ctx.attr.board[BuildSettingInfo].value),
+    )
+
+config_autogen = rule(
+    implementation = _config_autogen_impl,
+    attrs = {
+        "board": attr.label(mandatory = True),
+        "output": attr.output(mandatory = True),
+    },
+)
