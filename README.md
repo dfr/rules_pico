@@ -30,15 +30,13 @@ building the Pico libraries. To make use of this, select the pico plaform in you
 
 ```
 build --incompatible_enable_cc_toolchain_resolution
-build --platforms=//:pico
+build --platforms=@rules_pico//:pico
 ```
 The approach is to download the Pico SDK sources from github using bazel's
 new_git_repository rule and inject a BUILD file which handles most of the build, following
 the Pico SDK library structure as closely as possible. Linking binaries for the Pico is
 handled using bazel macros which include the necessary boot code and memory layout for
-compatiblity with Pico.
-
-The SDK libraries can be added as dependencies in the usual way
+compatiblity with Pico. The SDK libraries can be added as dependencies in the usual way
 and the result is an ELF format binary which can be further transformed to UF2:
 
 ```
