@@ -9,4 +9,8 @@ load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 
 bazel_skylib_workspace()
 
+load("//toolchain/private:defs.bzl", "detect_gcc_toolchain")
 
+detect_gcc_toolchain(
+    name = "gcc-arm-embedded",
+)

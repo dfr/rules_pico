@@ -7,6 +7,7 @@ load(
     "with_feature_set",
 )
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 
 all_compile_actions = [
     ACTION_NAMES.c_compile,
@@ -37,7 +38,8 @@ all_link_actions = [
 ]
 
 def _tool(ctx, tool_name):
-    return ctx.attr.path + "/bin/arm-none-eabi-{}".format(tool_name)
+    path = ctx.attr._gccpath[BuildSettingInfo].value
+    return path + "/bin/arm-none-eabi-{}".format(tool_name)
 
 def _impl(ctx):
     default_link_flags_feature = feature(
@@ -212,12 +214,14 @@ def _impl(ctx):
         #sysroot_feature,
         unfiltered_compile_flags_feature,
     ]
+    path = ctx.attr._gccpath[BuildSettingInfo].value
+    ver = ctx.attr._gccver[BuildSettingInfo].value
     cxx_builtin_include_directories = [
-        ctx.attr.path + "/arm-none-eabi/include",
-        ctx.attr.path + "/lib/gcc/arm-none-eabi/10.2.1/include",
-        ctx.attr.path + "/lib/gcc/arm-none-eabi/10.2.1/include-fixed",
+        path + "/arm-none-eabi/include",
+        path + "/lib/gcc/arm-none-eabi/{}/include".format(ver),
+        path + "/lib/gcc/arm-none-eabi/{}/include-fixed".format(ver),
+        path + "/include/newlib",
     ]
-
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = features,
@@ -237,7 +241,8 @@ cc_toolchain_config = rule(
     implementation = _impl,
     attrs = {
         "copts": attr.string_list(default = []),
-        "path": attr.string(default = "/usr/local/gcc-arm-embedded-10-2020-q4-major"),
+	    "_gccpath": attr.label(default = "@gcc-arm-embedded//:gccpath"),
+	    "_gccver": attr.label(default = "@gcc-arm-embedded//:gccver"),
     },
     provides = [CcToolchainConfigInfo],
 )

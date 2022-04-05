@@ -1,0 +1,13 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+
+package(default_visibility = ["//visibility:public"])
+
+string_flag(
+    name = "gccpath",
+    build_setting_default = "{gccpath}",
+)
+
+string_flag(
+    name = "gccver",
+    build_setting_default = "{gccver}",
+)
