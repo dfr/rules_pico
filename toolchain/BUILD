@@ -24,7 +24,6 @@ cc_toolchain(
     strip_files = ":empty",
     supports_param_files = 0,
     toolchain_config = ":gcc-arm-embedded-config",
-    toolchain_identifier = "cc-clang-rpi3",
 )
 
 toolchain(
