@@ -16,10 +16,13 @@ To use this in a project, just add the following to your WORKSPACE
 file:
 
 ```
-git_repository(
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
     name = "rules_pico",
-    branch = "main",
-    remote = "http://gitlab.home.rabson.org/dfr/rules_pico.git",
+    url = "https://github.com/dfr/rules_pico/archive/refs/heads/main.zip",
+    # sha256 = "...",
+    strip_prefix = "rules_pico-main",
 )
 
 load("@rules_pico//pico:repositories.bzl", "rules_pico_dependencies", "rules_pico_toolchains")
