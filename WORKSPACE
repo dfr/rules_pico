@@ -13,7 +13,7 @@ bazel_skylib_workspace()
 
 http_archive(
     name = "pico-examples",
-    build_file = "@rules_pico//pico:pico-examples.BUILD",
+    build_file = "@rules_pico//pico:BUILD.pico-examples",
     urls = [
         "https://github.com/raspberrypi/pico-examples/archive/refs/tags/sdk-1.3.0.tar.gz",
     ],

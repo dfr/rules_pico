@@ -17,7 +17,7 @@ def rules_pico_dependencies():
     maybe(
         new_git_repository,
         name = "pico-sdk",
-        build_file = "@rules_pico//pico:pico-sdk.BUILD",
+        build_file = "@rules_pico//pico:BUILD.pico-sdk",
         #tag = "1.3.0",
         #remote = "https://github.com/raspberrypi/pico-sdk.git",
         tag = "1.3.0-dfr",
