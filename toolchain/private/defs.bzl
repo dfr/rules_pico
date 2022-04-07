@@ -15,29 +15,30 @@ def _get_gcc_version(rctx, gccpath):
                 return line.split(" ")[2]
     fail("Failed to detect arm-none-eabi toolchain version: \n%s\n%s" % (res.stdout, res.stderr))
 
-def _detect_gcc_toolchain_impl(rctx):
+def _gcc_arm_embedded_toolchain_impl(rctx):
     gccpath = _get_gcc_path(rctx)
     gccver = _get_gcc_version(rctx, gccpath)
+    rctx.file("BUILD", content = "")
+    rctx.file("WORKSPACE", content = "")
     rctx.template(
-        "BUILD",
-        rctx.attr._build_template,
+        "cc_toolchain_config.bzl",
+        rctx.attr._toolchain_config_template,
         {
             "{gccpath}": gccpath,
             "{gccver}": gccver,
         },
     )
-    rctx.file("WORKSPACE", content = "")
 
-detect_gcc_toolchain = repository_rule(
-    implementation = _detect_gcc_toolchain_impl,
+gcc_arm_embedded_toolchain = repository_rule(
+    implementation = _gcc_arm_embedded_toolchain_impl,
     local = True,
     attrs = {
-        "_build_template": attr.label(
-            default = "//toolchain/private:BUILD.gcc-arm-embedded",
+        "_toolchain_config_template": attr.label(
+            default = "@rules_pico//toolchain/private:cc_toolchain_config.bzl.tpl",
             allow_single_file = True,
         ),
         "_detect": attr.label(
-            default = "//toolchain/private:detect.py",
+            default = "@rules_pico//toolchain/private:detect.py",
             allow_single_file = True,
         ),
     },

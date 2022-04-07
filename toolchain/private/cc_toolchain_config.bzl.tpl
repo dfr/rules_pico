@@ -1,3 +1,5 @@
+# -*- bazel-starlark -*-
+
 load(
     "@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl",
     "feature",
@@ -38,8 +40,7 @@ all_link_actions = [
 ]
 
 def _tool(ctx, tool_name):
-    path = ctx.attr._gccpath[BuildSettingInfo].value
-    return path + "/bin/arm-none-eabi-{}".format(tool_name)
+    return "{gccpath}/bin/arm-none-eabi-{}".format(tool_name)
 
 def _impl(ctx):
     default_link_flags_feature = feature(
@@ -58,7 +59,7 @@ def _impl(ctx):
                         ],
                     ),
                 ],
-            )
+            ),
         ],
     )
 
@@ -100,7 +101,7 @@ def _impl(ctx):
                             "-fstack-protector",
                             "-Wall",
                             "-fno-omit-frame-pointer",
-                            # "-isystem {}/arm-none-eabi/include".format(ctx.attr.path),
+                            # "-isystem {gccpath}/arm-none-eabi/include",
                         ] + ctx.attr.copts,
                     ),
                 ],
@@ -214,13 +215,11 @@ def _impl(ctx):
         #sysroot_feature,
         unfiltered_compile_flags_feature,
     ]
-    path = ctx.attr._gccpath[BuildSettingInfo].value
-    ver = ctx.attr._gccver[BuildSettingInfo].value
     cxx_builtin_include_directories = [
-        path + "/arm-none-eabi/include",
-        path + "/lib/gcc/arm-none-eabi/{}/include".format(ver),
-        path + "/lib/gcc/arm-none-eabi/{}/include-fixed".format(ver),
-        path + "/include/newlib",
+        "{gccpath}/arm-none-eabi/include",
+        "{gccpath}/lib/gcc/arm-none-eabi/{gccver}/include",
+        "{gccpath}/lib/gcc/arm-none-eabi/{gccver}/include-fixed",
+        "{gccpath}/include/newlib",
     ]
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
@@ -241,8 +240,6 @@ cc_toolchain_config = rule(
     implementation = _impl,
     attrs = {
         "copts": attr.string_list(default = []),
-	    "_gccpath": attr.label(default = "@gcc-arm-embedded//:gccpath"),
-	    "_gccver": attr.label(default = "@gcc-arm-embedded//:gccver"),
     },
     provides = [CcToolchainConfigInfo],
 )

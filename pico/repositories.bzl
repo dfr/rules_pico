@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
-load("//toolchain/private:defs.bzl", "detect_gcc_toolchain")
+load("//toolchain/private:defs.bzl", "gcc_arm_embedded_toolchain")
 
 def rules_pico_dependencies():
     maybe(
@@ -26,7 +26,7 @@ def rules_pico_dependencies():
     )
 
     maybe(
-        detect_gcc_toolchain,
+        gcc_arm_embedded_toolchain,
         name = "gcc-arm-embedded",
     )
 
