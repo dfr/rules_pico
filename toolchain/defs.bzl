@@ -2,10 +2,11 @@ load("@local_config_platform//:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:defs.bzl", "cc_toolchain")
 load("@gcc-arm-embedded//:cc_toolchain_config.bzl", "cc_toolchain_config")
 
-def gcc_embedded_toolchain(*, name, copts, target_compatible_with):
+def gcc_embedded_toolchain(*, name, copts, cxxopts = None, target_compatible_with):
     cc_toolchain_config(
         name = "{}-config".format(name),
         copts = copts,
+        cxxopts = cxxopts,
     )
     cc_toolchain(
         name = "{}-toolchain".format(name),

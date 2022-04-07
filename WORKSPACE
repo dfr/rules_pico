@@ -10,7 +10,6 @@ load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 
 bazel_skylib_workspace()
 
-
 http_archive(
     name = "pico-examples",
     build_file = "@rules_pico//pico:BUILD.pico-examples",

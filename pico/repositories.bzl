@@ -13,6 +13,14 @@ def rules_pico_dependencies():
         ],
     )
 
+    maybe(
+        http_archive,
+        name = "koro-platforms",
+        url = "https://github.com/dfr/koro-platforms/archive/refs/heads/main.zip",
+        strip_prefix = "koro-platforms-main",
+        sha256 = "7e43bfc83053442ed434739ff492978e339953bec1cf829b96845a6ae2b43c83",
+    )
+
     # Fetch pico-sdk via git so that we can pull in the tinyusb submodule
     maybe(
         new_git_repository,

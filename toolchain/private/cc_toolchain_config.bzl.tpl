@@ -86,51 +86,56 @@ def _impl(ctx):
 
     supports_pic_feature = feature(name = "supports_pic", enabled = True)
 
+    flag_sets = [
+        flag_set(
+            actions = all_compile_actions,
+            flag_groups = [
+                flag_group(
+                    flags = [
+                        "-U_FORTIFY_SOURCE",
+                        "-D_FORTIFY_SOURCE=1",
+                        "-DFREESTANDING",
+                        "-fstack-protector",
+                        "-Wall",
+                        "-fno-omit-frame-pointer",
+                        # "-isystem {gccpath}/arm-none-eabi/include",
+                        ] + ctx.attr.copts,
+                ),
+            ],
+        ),
+        flag_set(
+            actions = all_compile_actions,
+            flag_groups = [flag_group(flags = ["-g"])],
+            with_features = [with_feature_set(features = ["dbg"])],
+        ),
+        flag_set(
+            actions = all_compile_actions,
+            flag_groups = [
+                flag_group(
+                    flags = [
+                        "-g",
+                        "-O2",
+                        "-DNDEBUG",
+                        "-ffunction-sections",
+                        "-fdata-sections",
+                    ],
+                ),
+            ],
+            with_features = [with_feature_set(features = ["opt"])],
+        ),
+    ]
+    if ctx.attr.cxxopts:
+        flag_sets.append(
+            flag_set(
+                actions = all_cpp_compile_actions + [ACTION_NAMES.lto_backend],
+                flag_groups = [flag_group(flags = [] + ctx.attr.cxxopts)],
+            )
+        )
+
     default_compile_flags_feature = feature(
         name = "default_compile_flags",
         enabled = True,
-        flag_sets = [
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = [
-                            "-U_FORTIFY_SOURCE",
-                            "-D_FORTIFY_SOURCE=1",
-                            "-DFREESTANDING",
-                            "-fstack-protector",
-                            "-Wall",
-                            "-fno-omit-frame-pointer",
-                            # "-isystem {gccpath}/arm-none-eabi/include",
-                        ] + ctx.attr.copts,
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [flag_group(flags = ["-g"])],
-                with_features = [with_feature_set(features = ["dbg"])],
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = [
-                            "-g",
-                            "-O2",
-                            "-DNDEBUG",
-                            "-ffunction-sections",
-                            "-fdata-sections",
-                        ],
-                    ),
-                ],
-                with_features = [with_feature_set(features = ["opt"])],
-            ),
-            flag_set(
-                actions = all_cpp_compile_actions + [ACTION_NAMES.lto_backend],
-                flag_groups = [flag_group(flags = ["-std=c++20", "-fcoroutines"])],
-            ),
-        ],
+        flag_sets = flag_sets,
     )
 
     opt_feature = feature(name = "opt")
@@ -240,6 +245,7 @@ cc_toolchain_config = rule(
     implementation = _impl,
     attrs = {
         "copts": attr.string_list(default = []),
+        "cxxopts": attr.string_list(default = []),
     },
     provides = [CcToolchainConfigInfo],
 )
