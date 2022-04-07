@@ -5,7 +5,10 @@ load("@rules_pico//pico/private:defs.bzl", "pico_simple_hardware_target")
 load("@rules_pico//pico/private:defs.bzl", "format_flag_string_value")
 load("@rules_pico//pico/private:defs.bzl", "config_autogen")
 
-package(default_visibility = ["@rules_pico//pico:__pkg__"])
+package(default_visibility = [
+    "@rules_pico//pico:__pkg__",
+    "@tinyusb//:__pkg__",
+])
 
 filegroup(
     name = "all_srcs",
@@ -684,7 +687,7 @@ pico_sdk_library(
         ":pico_stdio_usb_headers",
         ":pico_unique_id",
         ":pico_usb_reset_interface",
-        ":tinyusb_device_unmarked",
+        "@tinyusb//:tinyusb_device_unmarked",
     ],
     alwayslink = True,  # XXX force stdio_usb_descriptors to link
 )
@@ -770,96 +773,6 @@ pico_sdk_library(
         ":pico_base",
         ":pico_sync",
     ],
-)
-
-# tinyusb
-
-cc_library(
-    name = "tinyusb_common",
-    deps = [
-        ":tinyusb_common_base",
-    ],
-)
-
-cc_library(
-    name = "tinyusb_common_base",
-    srcs = [
-        "lib/tinyusb/src/common/tusb_fifo.c",
-        "lib/tinyusb/src/tusb.c",
-    ],
-    local_defines = [
-        "CFG_TUSB_MCU=OPT_MCU_RP2040",
-        "CFG_TUSB_OS=OPT_OS_PICO",
-        "CFG_TUSB_DEBUG=0",
-    ],
-    deps = [
-        ":hardware_irq",
-        ":hardware_resets",
-        ":hardware_structs",
-        ":pico_stdio_usb_headers",  # XXX
-        ":pico_sync",
-        ":tinyusb_headers",
-    ],
-)
-
-cc_library(
-    name = "pico_fix_rp2040_usb_device_enumeration",
-    srcs = [
-        "lib/tinyusb/src/portable/raspberrypi/rp2040/dcd_rp2040.c",
-    ],
-    deps = [
-        ":pico_stdio_usb_headers",  # XXX
-        ":tinyusb_headers",
-    ],
-)
-
-cc_library(
-    name = "tinyusb_device_unmarked",
-    deps = [
-        ":pico_fix_rp2040_usb_device_enumeration",
-        ":tinyusb_common",
-        ":tinyusb_device_base",
-    ],
-)
-
-cc_library(
-    name = "tinyusb_device_base",
-    srcs = [
-        "lib/tinyusb/src/class/audio/audio_device.c",
-        "lib/tinyusb/src/class/cdc/cdc_device.c",
-        "lib/tinyusb/src/class/dfu/dfu_device.c",
-        "lib/tinyusb/src/class/dfu/dfu_rt_device.c",
-        "lib/tinyusb/src/class/hid/hid_device.c",
-        "lib/tinyusb/src/class/midi/midi_device.c",
-        "lib/tinyusb/src/class/msc/msc_device.c",
-        "lib/tinyusb/src/class/net/ecm_rndis_device.c",
-        "lib/tinyusb/src/class/net/ncm_device.c",
-        "lib/tinyusb/src/class/usbtmc/usbtmc_device.c",
-        "lib/tinyusb/src/class/vendor/vendor_device.c",
-        "lib/tinyusb/src/class/video/video_device.c",
-        "lib/tinyusb/src/device/usbd.c",
-        "lib/tinyusb/src/device/usbd_control.c",
-        "lib/tinyusb/src/portable/raspberrypi/rp2040/dcd_rp2040.c",
-        "lib/tinyusb/src/portable/raspberrypi/rp2040/rp2040_usb.c",
-    ],
-    local_defines = [
-        "CFG_TUSB_MCU=OPT_MCU_RP2040",
-        "CFG_TUSB_OS=OPT_OS_PICO",
-        "CFG_TUSB_DEBUG=0",
-    ],
-    deps = [
-        ":pico_stdio_usb_headers",  # XXX
-        ":pico_time",
-        ":tinyusb_common_base",
-    ],
-)
-
-cc_library(
-    name = "tinyusb_headers",
-    hdrs = glob([
-        "lib/tinyusb/src/**/*.h",
-    ]),
-    strip_include_prefix = "lib/tinyusb/src",
 )
 
 # hardware_*

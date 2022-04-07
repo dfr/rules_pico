@@ -1,0 +1,93 @@
+# -*- bazel-build -*-
+
+package(default_visibility = [
+    "@pico-sdk//:__pkg__",
+])
+
+cc_library(
+    name = "tinyusb_common",
+    deps = [
+        ":tinyusb_common_base",
+    ],
+)
+
+cc_library(
+    name = "tinyusb_common_base",
+    srcs = [
+        "src/common/tusb_fifo.c",
+        "src/tusb.c",
+    ],
+    local_defines = [
+        "CFG_TUSB_MCU=OPT_MCU_RP2040",
+        "CFG_TUSB_OS=OPT_OS_PICO",
+        "CFG_TUSB_DEBUG=0",
+    ],
+    deps = [
+        "@pico-sdk//:hardware_irq",
+        "@pico-sdk//:hardware_resets",
+        "@pico-sdk//:hardware_structs",
+        "@pico-sdk//:pico_stdio_usb_headers",  # XXX
+        "@pico-sdk//:pico_sync",
+        ":tinyusb_headers",
+    ],
+)
+
+cc_library(
+    name = "pico_fix_rp2040_usb_device_enumeration",
+    srcs = [
+        "src/portable/raspberrypi/rp2040/dcd_rp2040.c",
+    ],
+    deps = [
+        "@pico-sdk//:pico_stdio_usb_headers",  # XXX
+        ":tinyusb_headers",
+    ],
+)
+
+cc_library(
+    name = "tinyusb_device_unmarked",
+    deps = [
+        ":pico_fix_rp2040_usb_device_enumeration",
+        ":tinyusb_common",
+        ":tinyusb_device_base",
+    ],
+)
+
+cc_library(
+    name = "tinyusb_device_base",
+    srcs = [
+        "src/class/audio/audio_device.c",
+        "src/class/cdc/cdc_device.c",
+        "src/class/dfu/dfu_device.c",
+        "src/class/dfu/dfu_rt_device.c",
+        "src/class/hid/hid_device.c",
+        "src/class/midi/midi_device.c",
+        "src/class/msc/msc_device.c",
+        "src/class/net/ecm_rndis_device.c",
+        "src/class/net/ncm_device.c",
+        "src/class/usbtmc/usbtmc_device.c",
+        "src/class/vendor/vendor_device.c",
+        "src/class/video/video_device.c",
+        "src/device/usbd.c",
+        "src/device/usbd_control.c",
+        "src/portable/raspberrypi/rp2040/dcd_rp2040.c",
+        "src/portable/raspberrypi/rp2040/rp2040_usb.c",
+    ],
+    local_defines = [
+        "CFG_TUSB_MCU=OPT_MCU_RP2040",
+        "CFG_TUSB_OS=OPT_OS_PICO",
+        "CFG_TUSB_DEBUG=0",
+    ],
+    deps = [
+        "@pico-sdk//:pico_stdio_usb_headers",  # XXX
+        "@pico-sdk//:pico_time",
+        ":tinyusb_common_base",
+    ],
+)
+
+cc_library(
+    name = "tinyusb_headers",
+    hdrs = glob([
+        "src/**/*.h",
+    ]),
+    strip_include_prefix = "src",
+)
