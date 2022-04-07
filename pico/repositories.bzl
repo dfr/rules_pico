@@ -31,4 +31,4 @@ def rules_pico_dependencies():
     )
 
 def rules_pico_toolchains():
-    native.register_toolchains("//toolchain:gcc-arm-embedded")
+    native.register_toolchains("//toolchain:gcc-pico")
