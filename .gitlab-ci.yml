@@ -1,4 +1,4 @@
-build-job:
+.build:
   tags:
     - python3
     - bazel
@@ -6,3 +6,13 @@ build-job:
   stage: build
   script:
     - bazel build //examples/...:all
+
+build-freebsd:
+  extends: .build
+  tags:
+    - freebsd
+
+build-linux:
+  extends: .build
+  tags:
+    - linux
