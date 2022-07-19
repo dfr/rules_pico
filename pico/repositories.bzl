@@ -30,14 +30,13 @@ def rules_pico_dependencies():
         sha256 = "9d4eb47d231a39fc79f6b55e96f19e3c85c520b13dea7eb2f5dc4ed378fa317a",
     )
 
-    # Fetch pico-sdk via git so that we can pull in the tinyusb submodule
     maybe(
         http_archive,
         name = "pico-sdk",
         build_file = "@rules_pico//pico:BUILD.pico-sdk",
-        url = "https://github.com/dfr/pico-sdk/archive/refs/tags/1.3.0-dfr.zip",
-        strip_prefix = "pico-sdk-1.3.0-dfr",
-        sha256 = "0931e3dfe28d2efb38261539f04fc256e9f18b64f571f3e482fa1412f2c2ff92",
+        url = "https://github.com/raspberrypi/pico-sdk/archive/refs/tags/1.3.1.zip",
+        strip_prefix = "pico-sdk-1.3.1",
+        sha256 = "b7bc5ed98c73dabf6fb0c4fe7f4911aa908690cbbd452891c524ce33de5c40ce",
     )
 
     maybe(
