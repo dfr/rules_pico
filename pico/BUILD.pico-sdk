@@ -137,6 +137,10 @@ cc_binary(
         "tools/pioasm/pio_disassembler.cpp",
         "tools/pioasm/python_output.cpp",
     ],
+    local_defines = select({
+        "@platforms//os:windows": ["YY_NO_UNISTD_H"],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         ":pioasm_headers",
