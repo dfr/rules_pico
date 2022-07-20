@@ -215,6 +215,37 @@ pico_add_uf2_output = rule(
     },
 )
 
+def _pico_pio_header_impl(ctx):
+    pio = ctx.file.input
+    out = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.run(
+        inputs = [pio],
+        outputs = [out],
+        executable = ctx.executable.pioasm,
+        arguments = [pio.path, out.path],
+    )
+    return [DefaultInfo(
+        files = depset(direct = [out]),
+    )]
+
+pico_pio_header = rule(
+    implementation = _pico_pio_header_impl,
+    doc = "Assemble a file containing pio programs",
+    attrs = {
+        "input": attr.label(
+            doc = "Input pio file",
+            mandatory = True,
+            allow_single_file = True,
+        ),
+        "pioasm": attr.label(
+            doc = "pioasm tool",
+            cfg = "host",
+            default = "@pico-sdk//:pioasm",
+            executable = True,
+        ),
+    },
+)
+
 def _pico_add_bin_output_impl(ctx):
     toolchain = find_cpp_toolchain(ctx)
     elf = ctx.executable.input
