@@ -157,7 +157,7 @@ WRAP_FUNCTIONS = [
     "vsnprintf",
 ]
 
-def pico_binary(*, name, srcs, deps, copts = None):
+def pico_binary(*, name, srcs, deps, **kwargs):
     "Build an ELF binary using the pico-sdk bootstrap and memory map"
     native.cc_binary(
         name = name,
@@ -180,7 +180,7 @@ def pico_binary(*, name, srcs, deps, copts = None):
         deps = deps + [
             "@pico-sdk//:src/rp2_common/pico_standard_link/memmap_default.ld",
         ],
-        copts = copts,
+        **kwargs
     )
 
 def _pico_add_uf2_output_impl(ctx):
