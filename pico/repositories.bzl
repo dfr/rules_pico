@@ -34,9 +34,9 @@ def rules_pico_dependencies():
         http_archive,
         name = "pico-sdk",
         build_file = "@rules_pico//pico:BUILD.pico-sdk",
-        url = "https://github.com/raspberrypi/pico-sdk/archive/refs/tags/1.3.1.zip",
-        strip_prefix = "pico-sdk-1.3.1",
-        sha256 = "b7bc5ed98c73dabf6fb0c4fe7f4911aa908690cbbd452891c524ce33de5c40ce",
+        url = "https://github.com/raspberrypi/pico-sdk/archive/refs/tags/1.4.0.zip",
+        strip_prefix = "pico-sdk-1.4.0",
+        sha256 = "329f125f681b9adbfc89fff716026a6c3dbe517f172451dd04ceb91b10e7c5e1",
     )
 
     maybe(
