@@ -133,6 +133,7 @@ WRAP_FUNCTIONS = [
     "printf",
     "putchar",
     "puts",
+    "realloc",
     "remainder",
     "remainderf",
     "remquo",
