@@ -70,3 +70,18 @@ bool_flag(
     name = "stdio_semihosting",
     build_setting_default = False,
 )
+
+bool_flag(
+    name = "rtos_adapter_enable",
+    build_setting_default = False,
+)
+
+label_flag(
+    name = "rtos_adapter_header",
+    build_setting_default = "@//:please-set-the-rtos_adapter_header-and-rtos_adapter_header_name-flags",
+)
+
+string_flag(
+    name = "rtos_adapter_header_name",
+    build_setting_default = "",
+)

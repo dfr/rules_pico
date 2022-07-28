@@ -73,6 +73,11 @@ cc_binary(
         "@platforms//os:none",
         "@platforms//cpu:armv6-m",
     ],
+    local_defines = [
+        # Workaround for https://github.com/raspberrypi/pico-sdk/issues/950
+         "__PICO_STRING(x)=#x",
+         "__PICO_XSTRING(x)=__PICO_STRING(x)",
+    ],
     deps = [
         "src/rp2_common/boot_stage2/boot_stage2.ld",
         ":boot_stage2_asm",
@@ -224,13 +229,26 @@ cc_library(
         ":boards",
         ":cmsis",
         ":pico_board_flag",
-    ],
+    ] + select({
+        ":rtos_adapter_enable": [
+            "@rules_pico//pico/config:rtos_adapter_header",
+            ":pico_config_rtos_adapter_header_flag",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 format_flag_string_value(
     name = "pico_board_flag",
     flag_name = "PICO_BOARD",
     flag_value = "@rules_pico//pico/config:board",
+)
+
+format_flag_string_value(
+    name = "pico_config_rtos_adapter_header_flag",
+    flag_name = "PICO_CONFIG_RTOS_ADAPTER_HEADER",
+    flag_value = "@rules_pico//pico/config:rtos_adapter_header_name",
+    quote = False,
 )
 
 config_autogen(
@@ -412,6 +430,7 @@ pico_sdk_library(
     incdir = "src/rp2_common/pico_malloc/include",
     deps = [
         ":pico_platform",
+        ":pico_sync",  # if PICO_USE_MALLOC_MUTEX
     ],
     alwayslink = True,
 )
@@ -600,6 +619,7 @@ pico_sdk_library(
     "stdio_uart",
     "stdio_usb",
     "stdio_semihosting",
+    "rtos_adapter_enable",
 ]]
 
 alias(

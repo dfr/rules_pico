@@ -52,10 +52,14 @@ def pico_simple_hardware_target(*, name, deps = [], **kwargs):
     )
 
 def _format_flag_string_value_impl(ctx):
+    if ctx.attr.quote:
+        fmt = "{}=\"{}\""
+    else:
+        fmt = "{}={}"
     return CcInfo(
         compilation_context = cc_common.create_compilation_context(
             defines = depset([
-                "{}=\"{}\"".format(
+                fmt.format(
                     ctx.attr.flag_name,
                     ctx.attr.flag_value[BuildSettingInfo].value,
                 ),
@@ -68,6 +72,7 @@ format_flag_string_value = rule(
     attrs = {
         "flag_name": attr.string(),
         "flag_value": attr.label(),
+        "quote": attr.bool(default=True),
     },
 )
 
