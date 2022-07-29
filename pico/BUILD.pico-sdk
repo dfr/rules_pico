@@ -267,9 +267,9 @@ genrule(
     ],
     cmd = """
         sed -e 's/$${PICO_SDK_VERSION_MAJOR}/1/' \
-            -e 's/$${PICO_SDK_VERSION_MINOR}/3/' \
+            -e 's/$${PICO_SDK_VERSION_MINOR}/4/' \
             -e 's/$${PICO_SDK_VERSION_REVISION}/0/' \
-            -e 's/$${PICO_SDK_VERSION_STRING}/1.3.0/' < $< > $@
+            -e 's/$${PICO_SDK_VERSION_STRING}/1.4.0/' < $< > $@
     """,
 )
 
