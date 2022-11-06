@@ -311,6 +311,15 @@ pico_sdk_library(
     ],
 )
 
+pico_sdk_library(
+    name = "pico_cyw43_arch",
+    srcdir = "src/rp2_common/pico_cyw43_arch",
+    incdir = "src/rp2_common/pico_cyw43_arch/include",
+    deps = [
+        ":pico_platform",
+    ],
+)
+
 alias(
     name = "pico_double",
     actual = "@rules_pico//pico/config:double_impl",

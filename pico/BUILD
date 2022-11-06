@@ -27,7 +27,7 @@
     "hardware_vreg",
     "hardware_watchdog",
     "hardware_xosc",
-
+    "pico_cyw43_arch",
     "pico_multicore",
     "pico_stdlib",
     "pico_sync",
