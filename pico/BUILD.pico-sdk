@@ -54,8 +54,9 @@ genrule(
     name = "bs2_default_bin",
     srcs = ["bs2_default.elf"],
     outs = ["bs2_default.bin"],
-    cmd = "$(OBJCOPY) -O binary $< $@",
+    cmd = "$(execpath @arm_none_eabi//:objcopy) -O binary $< $@",
     toolchains = ["@bazel_tools//tools/cpp:current_cc_toolchain"],
+    tools = ["@arm_none_eabi//:objcopy"],
 )
 
 cc_binary(

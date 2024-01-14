@@ -1,6 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
-load("//toolchain/private:defs.bzl", "gcc_arm_embedded_toolchain")
 
 def rules_pico_dependencies():
     maybe(
@@ -39,10 +38,5 @@ def rules_pico_dependencies():
         sha256 = "329f125f681b9adbfc89fff716026a6c3dbe517f172451dd04ceb91b10e7c5e1",
     )
 
-    maybe(
-        gcc_arm_embedded_toolchain,
-        name = "gcc-arm-embedded",
-    )
-
 def rules_pico_toolchains():
-    native.register_toolchains("//toolchain:gcc-pico")
+    native.register_toolchains("//toolchain:gcc-pico_linux_x86_64")

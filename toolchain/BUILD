@@ -1,10 +1,8 @@
-load(":defs.bzl", "gcc_embedded_toolchain")
+load("@arm_none_eabi//toolchain:toolchain.bzl", "arm_none_eabi_toolchain")
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(name = "empty")
-
-gcc_embedded_toolchain(
+arm_none_eabi_toolchain(
     name = "gcc-pico",
     copts = [
         "-mcpu=cortex-m0plus",
